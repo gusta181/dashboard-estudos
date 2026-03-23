@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Estudos — Direito</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  :root {
+    --bg:#0c0c10; --surface:#16161e; --surface2:#1e1e2a; --surface3:#282836;
+    --accent:#c9a55a; --accent-light:#e8cc7a; --accent-dim:#8a7340;
+    --text:#e8e6e1; --text-muted:#8a8894; --text-dim:#5a5868;
+    --penal:#e05555; --const:#5588dd; --civil:#44bb88; --tgp:#bb77dd;
+    --mkt:#ee8844; --routine:#667788; --gym:#55ccaa; --facul:#ddaa55;
+    --border:rgba(201,165,90,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(201,165,90,0.04) 0%,transparent 70%),radial-gradient(ellipse 50% 50% at 80% 90%,rgba(100,80,160,0.03) 0%,transparent 70%);pointer-events:none;z-index:0}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  input,select{font-family:inherit}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const C = {
+  bg:"#0c0c10",surface:"#16161e",surface2:"#1e1e2a",surface3:"#282836",
+  accent:"#c9a55a",accentLight:"#e8cc7a",accentDim:"#8a7340",
+  text:"#e8e6e1",textMuted:"#8a8894",textDim:"#5a5868",
+  penal:"#e05555",constitucional:"#5588dd",civil:"#44bb88",tgp:"#bb77dd",
+  marketing:"#ee8844",routine:"#667788",gym:"#55ccaa",facul:"#ddaa55",
+  border:"rgba(201,165,90,0.12)"
+};
+
+const TC = {penal:C.penal,constitucional:C.constitucional,civil:C.civil,tgp:C.tgp,marketing:C.marketing,routine:C.routine,gym:C.gym,facul:C.facul,work:"#8899aa"};
+const DAYS=["seg","ter","qua","qui","sex","sab","dom"];
+const DL={seg:"Seg",ter:"Ter",qua:"Qua",qui:"Qui",sex:"Sex",sab:"Sáb",dom:"Dom"};
+const TO=Object.keys(TC);
+
+const DS={
+  seg:[
+    {id:"s1",time:"05:00",activity:"Acordar + Hidratação + Alongamento",tag:"routine"},
+    {id:"s2",time:"05:15",activity:"Planejamento da semana",tag:"routine"},
+    {id:"s3",time:"05:25",activity:"Marketing — Métricas + conteúdo",tag:"marketing"},
+    {id:"s4",time:"06:10",activity:"Direito Penal — Teoria + anotações",tag:"penal"},
+    {id:"s5",time:"07:00",activity:"Academia — Treino",tag:"gym",fixed:true},
+    {id:"s6",time:"09:00",activity:"Trabalho (+ Marketing celular)",tag:"work",fixed:true},
+    {id:"s7",time:"12:00",activity:"Almoço + Flashcards (20 min)",tag:"routine"},
+    {id:"s8",time:"17:00",activity:"Lanche + descompressão",tag:"routine"},
+    {id:"s9",time:"17:15",activity:"Direito Constitucional — Questões",tag:"constitucional"},
+    {id:"s10",time:"18:15",activity:"Deslocamento faculdade",tag:"routine"},
+    {id:"s11",time:"18:30",activity:"Faculdade — Aula",tag:"facul",fixed:true},
+    {id:"s12",time:"21:30",activity:"Retorno + descanso",tag:"routine"},
+    {id:"s13",time:"21:50",activity:"Revisão do dia + anotações",tag:"routine"},
+    {id:"s14",time:"22:20",activity:"Rotina de sono",tag:"routine"},
+    {id:"s15",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  ter:[
+    {id:"t1",time:"05:00",activity:"Acordar + Hidratação + Alongamento",tag:"routine"},
+    {id:"t2",time:"05:15",activity:"Planejamento do dia",tag:"routine"},
+    {id:"t3",time:"05:25",activity:"Marketing — Criação de conteúdo",tag:"marketing"},
+    {id:"t4",time:"06:10",activity:"Direito Constitucional — Teoria",tag:"constitucional"},
+    {id:"t5",time:"07:00",activity:"Academia — Treino",tag:"gym",fixed:true},
+    {id:"t6",time:"09:00",activity:"Trabalho (+ Marketing celular)",tag:"work",fixed:true},
+    {id:"t7",time:"12:00",activity:"Almoço + Flashcards (20 min)",tag:"routine"},
+    {id:"t8",time:"17:00",activity:"Lanche + descompressão",tag:"routine"},
+    {id:"t9",time:"17:15",activity:"Direito Penal — Casos práticos",tag:"penal"},
+    {id:"t10",time:"18:15",activity:"Deslocamento faculdade",tag:"routine"},
+    {id:"t11",time:"18:30",activity:"Faculdade — Aula",tag:"facul",fixed:true},
+    {id:"t12",time:"21:30",activity:"Retorno + descanso",tag:"routine"},
+    {id:"t13",time:"21:50",activity:"Revisão + questões rápidas",tag:"routine"},
+    {id:"t14",time:"22:20",activity:"Rotina de sono",tag:"routine"},
+    {id:"t15",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  qua:[
+    {id:"q1",time:"05:00",activity:"Acordar + Hidratação + Alongamento",tag:"routine"},
+    {id:"q2",time:"05:15",activity:"Planejamento do dia",tag:"routine"},
+    {id:"q3",time:"05:25",activity:"Marketing — Análise + ajustes",tag:"marketing"},
+    {id:"q4",time:"06:10",activity:"Direito Civil — Teoria nova",tag:"civil"},
+    {id:"q5",time:"07:00",activity:"Academia — Treino",tag:"gym",fixed:true},
+    {id:"q6",time:"09:00",activity:"Trabalho (+ Marketing celular)",tag:"work",fixed:true},
+    {id:"q7",time:"12:00",activity:"Almoço + Flashcards (20 min)",tag:"routine"},
+    {id:"q8",time:"17:00",activity:"Lanche + descompressão",tag:"routine"},
+    {id:"q9",time:"17:15",activity:"Teoria Geral do Processo — Estudo",tag:"tgp"},
+    {id:"q10",time:"18:15",activity:"Deslocamento faculdade",tag:"routine"},
+    {id:"q11",time:"18:30",activity:"Faculdade — Aula",tag:"facul",fixed:true},
+    {id:"q12",time:"21:30",activity:"Retorno + descanso",tag:"routine"},
+    {id:"q13",time:"21:50",activity:"Revisão + mapa mental",tag:"routine"},
+    {id:"q14",time:"22:20",activity:"Rotina de sono",tag:"routine"},
+    {id:"q15",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  qui:[
+    {id:"qi1",time:"05:00",activity:"Acordar + Hidratação + Alongamento",tag:"routine"},
+    {id:"qi2",time:"05:15",activity:"Planejamento do dia",tag:"routine"},
+    {id:"qi3",time:"05:25",activity:"Marketing — Estratégia",tag:"marketing"},
+    {id:"qi4",time:"06:10",activity:"Teoria Geral do Processo — Teoria",tag:"tgp"},
+    {id:"qi5",time:"07:00",activity:"Academia — Treino",tag:"gym",fixed:true},
+    {id:"qi6",time:"09:00",activity:"Trabalho (+ Marketing celular)",tag:"work",fixed:true},
+    {id:"qi7",time:"12:00",activity:"Almoço + Flashcards (20 min)",tag:"routine"},
+    {id:"qi8",time:"17:00",activity:"Lanche + descompressão",tag:"routine"},
+    {id:"qi9",time:"17:15",activity:"Direito Civil — Jurisprudência",tag:"civil"},
+    {id:"qi10",time:"18:15",activity:"Deslocamento faculdade",tag:"routine"},
+    {id:"qi11",time:"18:30",activity:"Faculdade — Aula",tag:"facul",fixed:true},
+    {id:"qi12",time:"21:30",activity:"Retorno + descanso",tag:"routine"},
+    {id:"qi13",time:"21:50",activity:"Revisão + resumo semanal",tag:"routine"},
+    {id:"qi14",time:"22:20",activity:"Rotina de sono",tag:"routine"},
+    {id:"qi15",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  sex:[
+    {id:"sx1",time:"05:00",activity:"Acordar + Hidratação + Alongamento",tag:"routine"},
+    {id:"sx2",time:"05:15",activity:"Planejamento do dia",tag:"routine"},
+    {id:"sx3",time:"05:25",activity:"Marketing — Revisão semanal",tag:"marketing"},
+    {id:"sx4",time:"06:10",activity:"Revisão geral — Matéria mais fraca",tag:"routine"},
+    {id:"sx5",time:"07:00",activity:"Academia — Treino",tag:"gym",fixed:true},
+    {id:"sx6",time:"09:00",activity:"Trabalho (+ Marketing celular)",tag:"work",fixed:true},
+    {id:"sx7",time:"12:00",activity:"Almoço + descanso",tag:"routine"},
+    {id:"sx8",time:"17:00",activity:"Lanche + descanso",tag:"routine"},
+    {id:"sx9",time:"17:15",activity:"Simulado — Questões mistas",tag:"routine"},
+    {id:"sx10",time:"18:15",activity:"Deslocamento faculdade",tag:"routine"},
+    {id:"sx11",time:"18:30",activity:"Faculdade — Aula",tag:"facul",fixed:true},
+    {id:"sx12",time:"21:30",activity:"Noite livre / lazer",tag:"routine"},
+    {id:"sx13",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  sab:[
+    {id:"sa1",time:"06:00",activity:"Acordar + café reforçado",tag:"routine"},
+    {id:"sa2",time:"06:30",activity:"Marketing — Conteúdo semanal",tag:"marketing"},
+    {id:"sa3",time:"07:30",activity:"Academia — Treino",tag:"gym"},
+    {id:"sa4",time:"09:30",activity:"Bloco intensivo — Direito Penal",tag:"penal"},
+    {id:"sa5",time:"11:00",activity:"Pausa + lanche",tag:"routine"},
+    {id:"sa6",time:"11:15",activity:"Bloco intensivo — Constitucional",tag:"constitucional"},
+    {id:"sa7",time:"12:45",activity:"Almoço + descanso",tag:"routine"},
+    {id:"sa8",time:"14:00",activity:"Bloco intensivo — Direito Civil",tag:"civil"},
+    {id:"sa9",time:"15:30",activity:"Pausa + atividade leve",tag:"routine"},
+    {id:"sa10",time:"16:00",activity:"Bloco intensivo — TGP",tag:"tgp"},
+    {id:"sa11",time:"17:30",activity:"Revisão semanal + planejar",tag:"routine"},
+    {id:"sa12",time:"18:30",activity:"Tempo livre / lazer",tag:"routine"},
+    {id:"sa13",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+  dom:[
+    {id:"d1",time:"07:00",activity:"Acordar com calma + café",tag:"routine"},
+    {id:"d2",time:"08:00",activity:"Revisão leve — Flashcards",tag:"routine"},
+    {id:"d3",time:"09:30",activity:"Marketing — Agendamento",tag:"marketing"},
+    {id:"d4",time:"10:30",activity:"Tempo livre / lazer / família",tag:"routine"},
+    {id:"d5",time:"12:00",activity:"Almoço",tag:"routine"},
+    {id:"d6",time:"14:00",activity:"Leitura complementar / doutrina",tag:"routine"},
+    {id:"d7",time:"16:00",activity:"Tempo livre + descanso",tag:"routine"},
+    {id:"d8",time:"19:00",activity:"Planejamento da semana",tag:"routine"},
+    {id:"d9",time:"20:00",activity:"Relaxamento",tag:"routine"},
+    {id:"d10",time:"23:00",activity:"Dormir",tag:"routine"},
+  ],
+};
+
+const CHECKLIST_ITEMS = [
+  {title:"☀️ Madrugada/Manhã (5h — 7h)", items:[
+    {k:"c1",label:"5:00 — Acordar, hidratar, alongar"},
+    {k:"c2",label:"5:15 — Planejamento do dia (10 min)",tag:"routine"},
+    {k:"c3",label:"5:25 — Marketing: métricas + conteúdo",tag:"marketing"},
+    {k:"c4",label:"6:10 — Bloco de Estudo 1",tag:"penal"},
+  ]},
+  {title:"💪 Academia (7h — 9h)", items:[{k:"c5",label:"7:00 — Treino na academia",tag:"gym"}]},
+  {title:"🏢 Trabalho (9h — 17h)", items:[
+    {k:"c6",label:"09:00 — Início do trabalho"},
+    {k:"c7",label:"12:00 — Almoço + flashcards (20 min)",tag:"routine"},
+    {k:"c8",label:"Marketing pelo celular nos intervalos",tag:"marketing"},
+  ]},
+  {title:"📚 Pré-faculdade (17h — 18:15)", items:[
+    {k:"c9",label:"17:00 — Lanche + descompressão"},
+    {k:"c10",label:"17:15 — Bloco de Estudo 2",tag:"civil"},
+  ]},
+  {title:"🎓 Faculdade + Noite (18:30 — 23h)", items:[
+    {k:"c11",label:"18:30 — Aula na faculdade",tag:"facul"},
+    {k:"c12",label:"21:50 — Revisão do dia + anotações",tag:"routine"},
+    {k:"c13",label:"22:20 — Rotina de sono — desligar telas"},
+    {k:"c14",label:"23:00 — Dormir"},
+  ]},
+];
+
+function genId(){return "b"+Date.now()+Math.random().toString(36).slice(2,6)}
+function loadLS(k,fb){try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}}
+function saveLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+function Tag({tag}){
+  const c=TC[tag]||C.textMuted;
+  return <span style={{display:"inline-block",padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:700,letterSpacing:1,textTransform:"uppercase",background:c+"22",color:c}}>{tag}</span>;
+}
+
+function Modal({open,onClose,title,children}){
+  if(!open) return null;
+  return <div style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(4px)"}}/>
+    <div style={{position:"relative",background:C.surface,border:"1px solid "+C.border,borderRadius:16,padding:32,maxWidth:500,width:"90%",maxHeight:"80vh",overflowY:"auto",animation:"fadeIn 0.2s ease"}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700}}>{title}</h3>
+        <button onClick={onClose} style={{background:"none",border:"none",color:C.textMuted,fontSize:24,cursor:"pointer"}}>✕</button>
+      </div>
+      {children}
+    </div>
+  </div>;
+}
+
+function Inp({label,...props}){
+  return <div style={{marginBottom:16}}>
+    {label&&<label style={{display:"block",fontSize:12,fontWeight:600,color:C.textMuted,marginBottom:6,letterSpacing:1,textTransform:"uppercase"}}>{label}</label>}
+    <input {...props} style={{width:"100%",padding:"10px 14px",borderRadius:8,border:"1px solid "+C.border,background:C.surface2,color:C.text,fontFamily:"inherit",fontSize:14,outline:"none",...(props.style||{})}}/>
+  </div>;
+}
+
+function Sel({label,options,...props}){
+  return <div style={{marginBottom:16}}>
+    {label&&<label style={{display:"block",fontSize:12,fontWeight:600,color:C.textMuted,marginBottom:6,letterSpacing:1,textTransform:"uppercase"}}>{label}</label>}
+    <select {...props} style={{width:"100%",padding:"10px 14px",borderRadius:8,border:"1px solid "+C.border,background:C.surface2,color:C.text,fontFamily:"inherit",fontSize:14,outline:"none"}}>
+      {options.map(o=><option key={o} value={o}>{o}</option>)}
+    </select>
+  </div>;
+}
+
+function Btn({children,variant="primary",...props}){
+  const p=variant==="primary";
+  return <button {...props} style={{padding:"10px 24px",borderRadius:10,fontFamily:"inherit",fontSize:14,fontWeight:600,cursor:"pointer",transition:"all 0.2s",letterSpacing:0.5,border:p?"none":"1px solid "+C.accent,background:p?C.accent:"transparent",color:p?C.bg:C.accent,...(props.style||{})}}>{children}</button>;
+}
+
+function BlockForm({initial,onSave,onCancel}){
+  const[time,setTime]=useState(initial.time||"08:00");
+  const[activity,setActivity]=useState(initial.activity||"");
+  const[tag,setTag]=useState(initial.tag||"routine");
+  return <div>
+    <Inp label="Horário" type="time" value={time} onChange={e=>setTime(e.target.value)}/>
+    <Inp label="Atividade" value={activity} onChange={e=>setActivity(e.target.value)} placeholder="Descreva a atividade..."/>
+    <Sel label="Categoria" value={tag} onChange={e=>setTag(e.target.value)} options={TO}/>
+    <div style={{display:"flex",gap:12,marginTop:20}}>
+      <Btn onClick={()=>onSave({time,activity,tag})}>Salvar</Btn>
+      <Btn variant="ghost" onClick={onCancel}>Cancelar</Btn>
+    </div>
+  </div>;
+}
+
+function Pomodoro({count,focus,onUpdate}){
+  const[time,setTime]=useState(25*60);
+  const[running,setRunning]=useState(false);
+  const[isBreak,setIsBreak]=useState(false);
+  const ref=useRef(null);
+  const clear=()=>{if(ref.current)clearInterval(ref.current)};
+  useEffect(()=>{
+    if(running){
+      ref.current=setInterval(()=>{
+        setTime(t=>{
+          if(t<=1){clear();setRunning(false);
+            if(!isBreak){const nc=count+1,nf=focus+25;onUpdate(nc,nf);setIsBreak(true);return nc%4===0?15*60:5*60;}
+            else{setIsBreak(false);return 25*60;}
+          }return t-1;
+        });
+      },1000);
+    }return clear;
+  },[running,isBreak,count,focus]);
+  const min=Math.floor(time/60),sec=time%60;
+  const disp=String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+  const label=isBreak?(count%4===0?"Pausa Longa":"Pausa Curta"):"Foco — Estudo";
+  return <div style={{textAlign:"center",padding:"48px 24px"}}>
+    <div style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(64px,15vw,100px)",fontWeight:900,color:C.accent,letterSpacing:-2,lineHeight:1}}>{disp}</div>
+    <div style={{fontSize:13,letterSpacing:3,textTransform:"uppercase",color:C.textMuted,marginBottom:32,marginTop:8}}>{label}</div>
+    <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+      <Btn onClick={()=>setRunning(r=>!r)}>{running?"Pausar":time===25*60&&!isBreak?"Iniciar":"Continuar"}</Btn>
+      <Btn variant="ghost" onClick={()=>{clear();setRunning(false);setIsBreak(false);setTime(25*60)}}>Resetar</Btn>
+      <Btn variant="ghost" onClick={()=>{clear();setRunning(false);if(!isBreak){setIsBreak(true);setTime(5*60)}else{setIsBreak(false);setTime(25*60)}}}>Pular</Btn>
+    </div>
+    <div style={{display:"flex",gap:40,justifyContent:"center",marginTop:40}}>
+      <div style={{textAlign:"center"}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:36,fontWeight:700}}>{count}</div><div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.textDim,marginTop:4}}>Pomodoros</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontFamily:"'Playfair Display',serif",fontSize:36,fontWeight:700}}>{focus}m</div><div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.textDim,marginTop:4}}>Tempo Focado</div></div>
+    </div>
+  </div>;
+}
+
+function App(){
+  const[page,setPage]=useState("schedule");
+  const[schedules,setSchedules]=useState(()=>loadLS("dash-sch",DS));
+  const[checklist,setChecklist]=useState(()=>loadLS("dash-chk",{}));
+  const[pomoCount,setPomoCount]=useState(()=>loadLS("dash-pc",0));
+  const[pomoFocus,setPomoFocus]=useState(()=>loadLS("dash-pf",0));
+  const[selectedDay,setSelectedDay]=useState("seg");
+  const[editModal,setEditModal]=useState(null);
+  const[addModal,setAddModal]=useState(false);
+  const[toast,setToast]=useState(null);
+
+  useEffect(()=>saveLS("dash-sch",schedules),[schedules]);
+  useEffect(()=>saveLS("dash-chk",checklist),[checklist]);
+  useEffect(()=>saveLS("dash-pc",pomoCount),[pomoCount]);
+  useEffect(()=>saveLS("dash-pf",pomoFocus),[pomoFocus]);
+
+  const showToast=m=>{setToast(m);setTimeout(()=>setToast(null),3000)};
+  const updateBlock=(day,id,u)=>setSchedules(s=>({...s,[day]:s[day].map(b=>b.id===id?{...b,...u}:b)}));
+  const deleteBlock=(day,id)=>setSchedules(s=>({...s,[day]:s[day].filter(b=>b.id!==id)}));
+  const addBlock=(day,b)=>setSchedules(s=>({...s,[day]:[...s[day],{...b,id:genId()}].sort((a,b)=>a.time.localeCompare(b.time))}));
+  const resetAll=()=>{setSchedules(DS);setChecklist({});showToast("Rotina resetada!")};
+  const toggleCheck=k=>setChecklist(c=>({...c,[k]:!c[k]}));
+
+  const exportNotion=()=>{
+    let md="# 📚 Planner de Estudos — Direito\n\n**Faculdade** (noturno 18:30-21:30) | **Academia** (7h-9h) | **Trabalho** (9h-17h)\n\n---\n\n";
+    DAYS.forEach(d=>{md+=`## ${DL[d]}\n\n| Horário | Atividade | Tipo |\n|---------|-----------|------|\n`;(schedules[d]||[]).forEach(b=>{md+=`| ${b.time} | ${b.activity} | ${b.tag} |\n`});md+="\n"});
+    navigator.clipboard.writeText(md).then(()=>showToast("Copiado! Cole no Notion com Ctrl+V")).catch(()=>showToast("Erro ao copiar"));
+  };
+
+  const exportJSON=()=>{
+    const data=JSON.stringify({schedules,exportDate:new Date().toISOString()},null,2);
+    const blob=new Blob([data],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="planner-rotina.json";a.click();URL.revokeObjectURL(url);
+    showToast("JSON exportado!");
+  };
+
+  const navItems=[
+    {id:"schedule",icon:"📅",label:"Cronograma"},
+    {id:"checklist",icon:"✅",label:"Checklist"},
+    {id:"pomodoro",icon:"🍅",label:"Pomodoro"},
+    {id:"export",icon:"🔗",label:"Exportar / Notion"},
+  ];
+
+  return <div style={{minHeight:"100vh",position:"relative",zIndex:1}}>
+    {/* HEADER */}
+    <div style={{textAlign:"center",padding:"36px 20px 20px",borderBottom:"1px solid "+C.border}}>
+      <div style={{fontSize:10,letterSpacing:4,textTransform:"uppercase",color:C.accent,fontWeight:600,marginBottom:8}}>Dashboard Acadêmico 2026</div>
+      <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(28px,5vw,42px)",fontWeight:900,lineHeight:1.1}}>Rotina de <span style={{color:C.accent}}>Estudos</span></h1>
+      <p style={{color:C.textMuted,fontSize:14,marginTop:8}}>Direito · Marketing · Academia — Editável com dados salvos</p>
+    </div>
+
+    {/* NAV */}
+    <div style={{display:"flex",gap:4,padding:"12px 16px",overflowX:"auto",borderBottom:"1px solid "+C.border,background:C.surface}}>
+      {navItems.map(n=><button key={n.id} onClick={()=>setPage(n.id)} style={{
+        flex:"1 0 auto",padding:"10px 16px",borderRadius:10,border:"none",
+        background:page===n.id?C.surface3:"transparent",color:page===n.id?C.accent:C.textMuted,
+        fontFamily:"inherit",fontSize:13,fontWeight:600,cursor:"pointer",transition:"all 0.2s",whiteSpace:"nowrap",
+        boxShadow:page===n.id?"0 2px 8px rgba(0,0,0,0.3)":"none"
+      }}>{n.icon} {n.label}</button>)}
+    </div>
+
+    <div style={{maxWidth:900,margin:"0 auto",padding:"24px 16px"}}>
+
+      {/* SCHEDULE */}
+      {page==="schedule"&&<div style={{animation:"fadeUp 0.3s ease"}}>
+        <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",justifyContent:"center"}}>
+          {DAYS.map(d=><button key={d} onClick={()=>setSelectedDay(d)} style={{
+            padding:"8px 18px",borderRadius:8,border:"1px solid "+(selectedDay===d?C.accent:C.border),
+            background:selectedDay===d?C.accent:C.surface,color:selectedDay===d?C.bg:C.textMuted,
+            fontFamily:"inherit",fontSize:13,fontWeight:selectedDay===d?700:500,cursor:"pointer",transition:"all 0.2s"
+          }}>{DL[d]}</button>)}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700}}>{DL[selectedDay]}</h2>
+          <div style={{display:"flex",gap:8}}>
+            <Btn onClick={()=>setAddModal(true)} style={{fontSize:13,padding:"8px 16px"}}>+ Adicionar</Btn>
+            <Btn variant="ghost" onClick={resetAll} style={{fontSize:12,padding:"8px 12px",border:"1px solid "+C.textDim,color:C.textDim}}>Resetar</Btn>
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {(schedules[selectedDay]||[]).map(block=><div key={block.id} style={{
+            padding:"14px 20px",borderRadius:10,background:C.surface,border:"1px solid "+C.border,
+            display:"flex",alignItems:"center",gap:12,transition:"all 0.2s",
+            borderLeft:block.fixed?"3px solid "+C.textDim:"1px solid "+C.border,flexWrap:"wrap"
+          }}>
+            <span style={{fontSize:12,fontWeight:700,color:C.accent,letterSpacing:1,minWidth:48}}>{block.time}</span>
+            <span style={{flex:1,fontSize:14,fontWeight:500,minWidth:120}}>{block.activity}</span>
+            <Tag tag={block.tag}/>
+            <button onClick={()=>setEditModal({...block,day:selectedDay})} style={{background:"none",border:"none",color:C.textDim,cursor:"pointer",fontSize:16,padding:"4px 8px"}}>✏️</button>
+            <button onClick={()=>deleteBlock(selectedDay,block.id)} style={{background:"none",border:"none",color:"#aa4444",cursor:"pointer",fontSize:16,padding:"4px 8px"}}>🗑</button>
+          </div>)}
+        </div>
+        <Modal open={!!editModal} onClose={()=>setEditModal(null)} title="Editar Bloco">
+          {editModal&&<BlockForm initial={editModal} onSave={d=>{updateBlock(editModal.day,editModal.id,d);setEditModal(null);showToast("Atualizado!")}} onCancel={()=>setEditModal(null)}/>}
+        </Modal>
+        <Modal open={addModal} onClose={()=>setAddModal(false)} title="Novo Bloco">
+          <BlockForm initial={{time:"08:00",activity:"",tag:"routine"}} onSave={d=>{addBlock(selectedDay,d);setAddModal(false);showToast("Adicionado!")}} onCancel={()=>setAddModal(false)}/>
+        </Modal>
+      </div>}
+
+      {/* CHECKLIST */}
+      {page==="checklist"&&<div style={{animation:"fadeUp 0.3s ease"}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,marginBottom:20}}>Checklist Diário</h2>
+        {CHECKLIST_ITEMS.map(sec=><div key={sec.title} style={{background:C.surface,border:"1px solid "+C.border,borderRadius:14,padding:24,marginBottom:16}}>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,marginBottom:16}}>{sec.title}</h3>
+          {sec.items.map(item=>{const done=checklist[item.k];return <div key={item.k} onClick={()=>toggleCheck(item.k)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",cursor:"pointer"}}>
+            <div style={{width:20,height:20,borderRadius:5,flexShrink:0,border:done?"2px solid "+C.accent:"2px solid "+C.textDim,background:done?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s",fontSize:12,fontWeight:700,color:C.bg}}>{done?"✓":""}</div>
+            <span style={{fontSize:14,textDecoration:done?"line-through":"none",color:done?C.textDim:C.text}}>{item.label}{item.tag&&<span style={{marginLeft:8}}><Tag tag={item.tag}/></span>}</span>
+          </div>})}
+        </div>)}
+        <Btn variant="ghost" onClick={()=>{setChecklist({});showToast("Checklist limpo!")}} style={{border:"1px solid "+C.textDim,color:C.textDim,fontSize:13}}>Limpar checklist</Btn>
+      </div>}
+
+      {/* POMODORO */}
+      {page==="pomodoro"&&<Pomodoro count={pomoCount} focus={pomoFocus} onUpdate={(c,f)=>{setPomoCount(c);setPomoFocus(f)}}/>}
+
+      {/* EXPORT */}
+      {page==="export"&&<div style={{animation:"fadeUp 0.3s ease"}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,marginBottom:8}}>Exportar Rotina</h2>
+        <p style={{color:C.textMuted,fontSize:14,marginBottom:32}}>Envie sua rotina para o Notion ou salve como backup</p>
+        <div style={{display:"grid",gap:16}}>
+          <div style={{background:C.surface,border:"1px solid "+C.border,borderRadius:14,padding:28}}>
+            <div style={{fontSize:28,marginBottom:12}}>📋</div>
+            <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,marginBottom:8,color:C.accentLight}}>Enviar para o Notion</h3>
+            <p style={{color:C.textMuted,fontSize:13,lineHeight:1.6,marginBottom:16}}>Copia em Markdown formatado. Cole no Notion e ele cria tabelas automaticamente!</p>
+            <Btn onClick={exportNotion}>📋 Copiar para Notion</Btn>
+          </div>
+          <div style={{background:C.surface,border:"1px solid "+C.border,borderRadius:14,padding:28}}>
+            <div style={{fontSize:28,marginBottom:12}}>💾</div>
+            <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,marginBottom:8,color:C.accentLight}}>Exportar JSON</h3>
+            <p style={{color:C.textMuted,fontSize:13,lineHeight:1.6,marginBottom:16}}>Backup completo da rotina em arquivo JSON.</p>
+            <Btn variant="ghost" onClick={exportJSON}>💾 Baixar JSON</Btn>
+          </div>
+        </div>
+      </div>}
+    </div>
+
+    {/* TOAST */}
+    {toast&&<div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:C.accent,color:C.bg,padding:"12px 24px",borderRadius:10,fontWeight:600,fontSize:14,zIndex:2000,boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:"slideUp 0.3s ease"}}>{toast}</div>}
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
